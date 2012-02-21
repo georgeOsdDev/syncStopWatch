@@ -1,0 +1,101 @@
+<script src="http://localhost:3000/socket.io/lib/socket.io.js"></script>
+<script src="/javascripts/stopWatch.js"></script>
+<script src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+<script type="text/javascript">
+$(function(){
+
+});
+
+var socket = io.connect('http://localhost:3000');
+
+// 初回アクセス
+socket.on('connect', function(msg) {
+    console.log("connect");
+    $('#connectId').html( "Your Id -->" + socket.socket.transport.sessid);
+    $('#type').html("How to connect -->" + socket.socket.transport.name);
+});
+
+// ログ
+socket.on('logMsg', function(logMsg){
+    console.log('logMsg receive');
+    $('#logMsg').html(" " + logMsg.value);
+    setTimeout(function(){
+        $('#logMsg').fadeOut(500,function(){
+             $('#logMsg').html("Enjoy!");
+             $('#logMsg').fadeIn(100);
+        });
+    },300);
+});
+
+socket.on('nowActiveUser', function(data){
+    console.log('nowActiveUser received');
+    $('#nowActiveUser').html( "Active User -->" + data.value +" Player  ");
+});
+
+// サーバからクライアントへへ
+socket.on('yourfunc',function(obj) {
+    console.log('toClient:[' + obj.value +']');
+    eval(obj.value + '()');
+});
+
+// クライアントからサーバへ
+function socketToSrv(str){
+    console.log('toServer:[ ' + str + ' ]'); 
+    socket.emit('myfunc',{value: str});
+}
+
+// 接続断
+function DisConnect() {
+    console.log('disconnect from Client');
+    var msg = socket.socket.transport.sessid + " is disconnected";
+    stop();
+    $('#timer').html('Bye!');
+    socket.emit('message',{value: msg});
+    socket.disconnect();
+    $('#startBtn').addClass('disabled');
+    $('#stopBtn').addClass('disabled');
+    $('#resetBtn').addClass('disabled');
+    $('#disconBtn').addClass('disabled');
+}
+</script>
+
+<div class="container">
+	<div class="content">
+		<div class="page-header">
+			<h1>syncStopwatch <small> synchronized stopwatch on some clients</small></h1>
+			<span class="label success" >NOTE</span> javascriptで作ったストップウォッチをwebsocketで操作します。複数のブラウザで同時アクセスしてみてください。<a href="#"></a>
+
+		</div>
+		<section id="Main">
+		<div class="row">
+			<div class="span5">
+				<h2  id="timer" style="text-align:right;">0.0</h2>
+			</div>
+		</div>
+		<div class="row">
+			<div id="buttons" class="span8">
+				<input type="button" id="startBtn"  class="btn small span2" value="start" onclick="socketToSrv('start');">
+				<input type="button" id="stopBtn"   class="btn small span2" value="stop" onclick="socketToSrv('stop');">
+				<input type="button" id="resetBtn"  class="btn small span2" value="reset" onclick="socketToSrv('reset');">
+			</div>
+		</div>
+                </br>
+                <div class="row">
+                        <div class="span8">
+                        	<p id="connectId"></p>
+                                <p id="type"></p>
+                        	<p><span id="nowActiveUser"></p>
+                                <p style="color:green;" id="logMsg"></p>
+                                <input type="button" id="disconBtn" class="btn small span2 danger" value="disconnect" onclick="DisConnect()">
+               		</div>
+		 </div>
+		</section>
+	</div>
+	<footer>
+                <p style="text-align:right; float:right;">&copy; 2012 Oshida.Takeharu</p>
+		<p><small>Hosting :     <a href="http://www.fluxflex.com/">FluxFlex</a></small></p>
+                <p><small>Language :    <a href="http://nodejs.org/">node.js</a> & <a href="http://expressjs.com/">express.js</a> & <a href="http://socket.io">socket.io.js</a> & <a href="http://embeddedjs.com">ejs</small></p>
+                <p><small>Style   :     <a href="http://twitter.github.com/bootstrap/">TwitterBootStrap</a></small></p>
+	</footer>
+</div>
+
